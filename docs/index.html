@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDK-B Core Broadband Platform</title>
+<meta name="description" content="RDK-B Core Broadband Platform — overview, five-tier architecture, and architecture standards.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bedrock: #0b1220;
+    --hal: #1c3a5e;
+    --middleware: #1a56db;
+    --mgmt: #0e9f6e;
+    --cloud-bg: #eef2ff;
+    --cloud-fg: #3730a3;
+    --ink: #0f172a;
+    --muted: #5b6472;
+    --page-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --amber-fg: #b45309;
+    --amber-bg: #fef3c7;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--page-bg);
+    line-height: 1.55;
+  }
+  code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  a { color: var(--middleware); }
+  h1, h2, h3 { font-weight: 800; letter-spacing: -0.01em; margin: 0; }
+  p { margin: 0 0 12px; color: var(--muted); }
+
+  /* ---- nav ---- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(11,18,32,0.95);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 32px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .brand { color: #fff; font-weight: 700; font-size: 0.98rem; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+  .brand .mono { color: #8fb3ff; font-size: 0.78rem; font-weight: 600; }
+  .navlinks { display: flex; gap: 26px; }
+  .navlinks a { color: #cbd5e1; text-decoration: none; font-size: 0.88rem; font-weight: 500; margin-left: 26px; }
+  .navlinks a:hover { color: #fff; }
+  .navlinks a.ext::after { content: " ↗"; font-size: 0.78em; }
+
+  /* ---- hero ---- */
+  .hero {
+    background: linear-gradient(180deg, #0b1220 0%, #101c33 100%);
+    color: #fff;
+    padding: 72px 32px 56px;
+  }
+  .hero-inner { max-width: 980px; margin: 0 auto; }
+  .eyebrow {
+    display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: #8fb3ff;
+    border: 1px solid rgba(143,179,255,0.35); border-radius: 999px; padding: 4px 12px; margin-bottom: 18px;
+  }
+  .hero h1 { font-size: 2.6rem; color: #fff; max-width: 760px; }
+  .hero .lede { color: #b6c2d9; font-size: 1.1rem; max-width: 640px; margin-top: 14px; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .badge {
+    display: inline-block; margin: 0 10px 10px 0;
+    font-size: 0.8rem; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+    background: rgba(255,255,255,0.08); color: #dbe4f3; border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  /* ---- stat strip ---- */
+  .stats {
+    max-width: 980px; margin: -30px auto 0; padding: 0 32px;
+    display: flex; gap: 1px;
+    background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    position: relative; z-index: 2;
+  }
+  .stat { flex: 1; min-width: 0; background: #fff; padding: 20px 16px; text-align: center; }
+  @media (max-width: 760px) { .stats { flex-wrap: wrap; } .stat { flex: 1 1 40%; } }
+  .stat .num { font-size: 1.5rem; font-weight: 800; color: var(--middleware); }
+  .stat .lbl { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
+  /* ---- sections ---- */
+  section { max-width: 980px; margin: 0 auto; padding: 72px 32px; }
+  section.tight-top { padding-top: 56px; }
+  .section-head { margin-bottom: 32px; }
+  .section-head .eyebrow-lt {
+    font-family: "JetBrains Mono", monospace; font-size: 0.74rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--middleware); font-weight: 600; margin-bottom: 8px; display: block;
+  }
+  .section-head h2 { font-size: 1.9rem; }
+  .section-head p { margin-top: 10px; font-size: 1.02rem; max-width: 680px; }
+
+  .callout {
+    background: #eef2ff; border: 1px solid #c7d5fb; border-radius: 12px;
+    padding: 20px 24px; margin: 18px 0;
+  }
+  .callout strong { color: var(--ink); display: block; margin-bottom: 4px; font-size: 0.95rem; }
+  .callout p { margin: 0; font-size: 0.95rem; }
+
+  .two-col { display: flex; gap: 28px; }
+  .two-col > * { flex: 1; min-width: 0; }
+  @media (max-width: 760px) { .two-col { flex-direction: column; } }
+
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+  .card h3 { font-size: 1rem; margin-bottom: 8px; }
+  .card p { font-size: 0.92rem; margin: 0; }
+
+  table.def-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.9rem; }
+  table.def-table th, table.def-table td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.def-table th { background: #f1f5f9; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  table.def-table td.mono { color: var(--ink); font-weight: 600; white-space: nowrap; }
+
+  /* ---- timeline ---- */
+  .timeline { border-left: 2px solid var(--border); margin-left: 6px; padding-left: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .tl-item { position: relative; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -29px; top: 4px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--middleware); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--middleware);
+  }
+  .tl-year { font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--middleware); font-size: 0.86rem; }
+  .tl-item p { margin: 2px 0 0; font-size: 0.92rem; }
+
+  /* ---- five-tier diagram ---- */
+  .tier-diagram { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .tier {
+    display: flex; align-items: stretch;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .tier:last-child { border-bottom: none; }
+  .tier .num {
+    flex: 0 0 64px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 1.1rem;
+  }
+  .tier .body { flex: 1; padding: 18px 22px; }
+  .tier .body h4 { margin: 0 0 4px; font-size: 1rem; font-weight: 700; }
+  .tier .body p { margin: 0; font-size: 0.88rem; }
+  .tier.t5 { background: var(--cloud-bg); color: var(--cloud-fg); }
+  .tier.t5 .num { background: #d9e2ff; color: var(--cloud-fg); }
+  .tier.t4 { background: #e3f7ef; color: #065f46; }
+  .tier.t4 .num { background: var(--mgmt); color: #fff; }
+  .tier.t3 { background: var(--middleware); color: #fff; }
+  .tier.t3 .num { background: #1442ad; color: #fff; }
+  .tier.t3 .body p { color: #dce6ff; }
+  .tier.t2 { background: var(--hal); color: #fff; }
+  .tier.t2 .num { background: #142b47; color: #fff; }
+  .tier.t2 .body p { color: #c5d3e6; }
+  .tier.t1 { background: var(--bedrock); color: #fff; }
+  .tier.t1 .num { background: #05070d; color: #9fb2cf; }
+  .tier.t1 .body p { color: #9fb2cf; }
+  .tier-caption { text-align: center; font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
+
+  /* ---- layering boxes ---- */
+  .layer-stack { display: flex; flex-direction: column; gap: 6px; }
+  .layer-box { margin-bottom: 6px; border-radius: 8px; padding: 12px 16px; font-size: 0.86rem; font-weight: 600; text-align: center; }
+  .layer-box:last-child { margin-bottom: 0; }
+  .layer-box.top { background: var(--middleware); color: #fff; }
+  .layer-box.mid { background: var(--hal); color: #fff; }
+  .layer-box.bot { background: #e2e8f0; color: var(--ink); }
+
+  /* ---- standards cards ---- */
+  .std-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-right: -16px; }
+  .std-card { flex: 1 1 calc(50% - 16px); min-width: 260px; margin: 0 16px 16px 0; border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; background: #fff; }
+  .std-card .tag {
+    display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--amber-fg); background: var(--amber-bg);
+    border-radius: 5px; padding: 2px 7px; margin-bottom: 8px;
+  }
+  .std-card h4 { margin: 0 0 6px; font-size: 0.95rem; }
+  .std-card p { margin: 0; font-size: 0.87rem; }
+
+  .subhead { font-size: 1.15rem; font-weight: 700; margin: 34px 0 12px; }
+  .subhead:first-of-type { margin-top: 8px; }
+
+  footer {
+    background: var(--bedrock); color: #9fb2cf; padding: 44px 32px 30px;
+  }
+  .footer-inner { max-width: 980px; margin: 0 auto; }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 28px; margin-bottom: 22px; }
+  .footer-links a { display: block; min-width: 200px; margin: 0 28px 14px 0; color: #dbe4f3; text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+  .footer-links a span { display: block; font-weight: 400; color: #8493ab; font-size: 0.8rem; margin-top: 2px; }
+  .footer-meta { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px; font-size: 0.78rem; color: #7386a3; }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pill { display: inline-block; margin: 0 8px 8px 0; font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #f1f5f9; color: var(--ink); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">RDK-B Core Broadband <span class="mono">// base</span></div>
+  <div class="navlinks">
+    <a href="#overview">Overview</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#standards">Standards</a>
+    <a class="ext" href="https://cpokuru.github.io/CoreRDK-Broadband-Docs-Staging/">Components</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow">RDK-B_CoreRDK_Spec_MVP · v1.0</span>
+    <h1>RDK-B Core Broadband Platform</h1>
+    <p class="lede">An open-source, modular, operator-grade middleware platform providing a
+      standardized software stack for broadband residential and business devices — from
+      headless modems to full Wi-Fi 7 gateways with IoT and app containers.</p>
+    <div class="badge-row">
+      <span class="badge">26 features</span>
+      <span class="badge">7 device profiles</span>
+      <span class="badge">Five-tier architecture</span>
+      <span class="badge">Apache-2.0 / LGPL-2.1</span>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="num">2012</div><div class="lbl">Platform origin</div></div>
+  <div class="stat"><div class="num">2016</div><div class="lbl">RDK Central formed</div></div>
+  <div class="stat"><div class="num">100M+</div><div class="lbl">Devices deployed</div></div>
+  <div class="stat"><div class="num">5</div><div class="lbl">Architecture tiers</div></div>
+  <div class="stat"><div class="num">2026</div><div class="lbl">Matter / IoT added</div></div>
+</div>
+
+<section id="overview" class="tight-top">
+  <div class="section-head">
+    <span class="eyebrow-lt">01 — Overview</span>
+    <h2>What is RDK-B?</h2>
+    <p>RDK-B sits between the hardware SoC/BSP layer and the operator's cloud management
+      systems, providing pre-integrated components for Wi-Fi, routing, diagnostics,
+      telemetry, device management, IoT, and application containerization.</p>
+  </div>
+
+  <div class="callout">
+    <strong>Platform definition</strong>
+    <p>RDKB components are open-sourced, vendor-independent, actively maintained, and each
+      represented by one or more GitHub repositories. A HAL abstraction model means a single
+      software stack can run on radically different SoC platforms — each component contains a
+      logical grouping of related features, so a build only includes what a given device
+      profile actually needs.</p>
+  </div>
+
+  <div class="two-col" style="margin-top:28px;">
+    <div class="card">
+      <h3>RDK-B component</h3>
+      <p>A foundational, modular building block — open source, vendor independent, and
+        actively maintained — represented by one or more GitHub repos. Components can be
+        combined to create different software builds, and many are optional by design so a
+        build only carries what its device profile needs.</p>
+    </div>
+    <div class="card">
+      <h3>Not an RDK-B component</h3>
+      <p>Platform-specific Yocto manifests and meta-layers, board-specific build examples,
+        vendor HAL implementations, and deprecated legacy code kept for history. These are
+        integration artifacts, not reusable middleware.</p>
+    </div>
+  </div>
+
+  <div class="subhead">Platform origins</div>
+  <div class="timeline">
+    <div class="tl-item"><span class="tl-year">2012</span><p>RDK inception by Liberty Global and Comcast, for video (RDK-V).</p></div>
+    <div class="tl-item"><span class="tl-year">2014</span><p>RDK-B broadband stream launched; first DOCSIS gateway deployments.</p></div>
+    <div class="tl-item"><span class="tl-year">2016</span><p>RDK Central LLC established as a neutral governance entity.</p></div>
+    <div class="tl-item"><span class="tl-year">2018</span><p>RBUS IPC introduced, replacing legacy CCSP/D-Bus.</p></div>
+    <div class="tl-item"><span class="tl-year">2020–22</span><p>WAN Manager / Interface Managers introduced; DSM and Dobby container runtime merged; USP/TR-369 published.</p></div>
+    <div class="tl-item"><span class="tl-year">2023–24</span><p>OneWifi launched; platform surpasses 100M+ devices deployed globally.</p></div>
+    <div class="tl-item"><span class="tl-year">2025</span><p>Wi-Fi 7 (802.11be) integrated; EasyMesh introduced.</p></div>
+    <div class="tl-item"><span class="tl-year">2026</span><p>Matter/IoT (BartonCore) introduced.</p></div>
+  </div>
+
+  <div class="subhead">Licensing</div>
+  <div class="pill-row">
+    <span class="pill">Apache License 2.0 — primary license for most middleware components</span>
+    <span class="pill">LGPL-2.1 — library components, for compatibility with proprietary HALs</span>
+  </div>
+</section>
+
+<section id="architecture" style="background:#fff; border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="section-head">
+    <span class="eyebrow-lt">02 — Architecture</span>
+    <h2>The five-tier model</h2>
+    <p>RDK-B's architecture reads like a cross-section: cloud-facing management at the top,
+      silicon at the base, with the RDK-B middleware — the platform's largest tier — doing
+      the work in between.</p>
+  </div>
+
+  <div class="tier-diagram">
+    <div class="tier t5">
+      <div class="num">5</div>
+      <div class="body">
+        <h4>Cloud / ACS</h4>
+        <p>Operator cloud: ACS, USP Controller, xConf, WebConfig, telemetry backends, crash collection, log aggregation.</p>
+      </div>
+    </div>
+    <div class="tier t4">
+      <div class="num">4</div>
+      <div class="body">
+        <h4>Management Protocols</h4>
+        <p class="mono" style="font-size:0.82rem;">parodus / WebPA · usp-pa-vendor-rdk · tr069-protocol-agent · xconf-client · WebconfigFramework · T2 telemetry</p>
+      </div>
+    </div>
+    <div class="tier t3">
+      <div class="num">3</div>
+      <div class="body">
+        <h4>RDK-B Middleware</h4>
+        <p>OneWiFi, wan-manager, dhcp-manager, DSM, Dobby, BartonCore, and all 26 feature components. All communicate over RBUS.</p>
+      </div>
+    </div>
+    <div class="tier t2">
+      <div class="num">2</div>
+      <div class="body">
+        <h4>HAL / BSP</h4>
+        <p><code style="color:#e2ecff;">rdkb-halif-*</code> interface libraries and the vendor BSP — the boundary between RDK-B middleware and SoC firmware.</p>
+      </div>
+    </div>
+    <div class="tier t1">
+      <div class="num">1</div>
+      <div class="body">
+        <h4>Hardware / SoC</h4>
+        <p>Physical silicon: SoC CPU, Wi-Fi radio, modem chipset, Ethernet switch, Flash/RAM.</p>
+      </div>
+    </div>
+  </div>
+  <div class="tier-caption">Tier 3 (RDK-B Middleware) is where nearly all feature development happens; Tiers 1–2 are vendor-owned and certified via RDK Ready.</div>
+
+  <div class="two-col" style="margin-top:44px;">
+    <div>
+      <div class="subhead" style="margin-top:0;">Production software builds</div>
+      <div class="layer-stack">
+        <div class="layer-box top">RDK-B Components</div>
+        <div class="layer-box mid">Hardware Abstraction Layer</div>
+        <div class="layer-box bot">Vendor Layer — hardware-dependent implementation</div>
+      </div>
+    </div>
+    <div>
+      <div class="subhead" style="margin-top:0;">Vendor test software builds</div>
+      <div class="layer-stack">
+        <div class="layer-box top">RDK Ready — Vendor Test Software</div>
+        <div class="layer-box mid">Hardware Abstraction Layer</div>
+        <div class="layer-box bot">Vendor Layer — hardware-dependent implementation</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="def-table" style="margin-top:32px;">
+    <thead><tr><th>Test suite</th><th>Definition</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">RDK Platform Test Suite</td><td>Component behavior, integration, data model, management, security, profile conformance.</td><td>RDK-B Owner</td></tr>
+      <tr><td class="mono">Vendor Test Suite</td><td>HAL implementation correctness, SoC-specific behavior.</td><td>HAL Spec Owner</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="standards">
+  <div class="section-head">
+    <span class="eyebrow-lt">03 — Standards</span>
+    <h2>Architecture standards and governance</h2>
+    <p>Every new or refactored component is held to the same rules for modularity, IPC,
+      testing, and data modeling — so the platform stays consistent as more vendors and
+      operators contribute to it.</p>
+  </div>
+
+  <div class="subhead" style="margin-top:0;">Process &amp; architecture governance</div>
+  <div class="std-grid">
+    <div class="std-card">
+      <span class="tag">Modularity</span>
+      <h4>Component scope</h4>
+      <p>A component must implement one grouping of similar features only, so it can be added
+        to a build solely when that feature set is needed.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">IPC</span>
+      <h4>RBUS is authoritative</h4>
+      <p>All new contributions must use RBUS exclusively for inter-component IPC. Static
+        analysis checks for regressions to sysevent, DMCLI, or CCSP.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">Dependencies</span>
+      <h4>Core vs. non-core</h4>
+      <p>Non-core components must not depend on other non-core components — only on Core
+        components, which are required across every device profile.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">Testing</span>
+      <h4>Unit tests &amp; HAL suites</h4>
+      <p>New components ship with isolated unit tests; HAL interfaces require an
+        <code>rdkb-halif-test-*</code> suite before being declared stable.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">Data model</span>
+      <h4>Documentation is auto-verified</h4>
+      <p>Supported data model elements are auto-discovered at runtime and diffed against
+        submitted documentation before a contribution is accepted.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">TR-181</span>
+      <h4>Standard data models first</h4>
+      <p>New data model names extend the TR-181 hierarchy where possible, using the
+        <code>X_RDK-&lt;name&gt;</code> extension format otherwise.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">Versioning</span>
+      <h4>Semantic versioning, always</h4>
+      <p>All components and HAL interfaces follow MAJOR.MINOR.PATCH; deprecated interfaces
+        stay supported for at least two release cycles.</p>
+    </div>
+    <div class="std-card">
+      <span class="tag">Build</span>
+      <h4>Clean Yocto builds</h4>
+      <p>No layer dependency cycles; recipes declare explicit LICENSE and SPDX identifiers;
+        distro flags gate every profile-specific or optional feature.</p>
+    </div>
+  </div>
+
+  <div class="subhead">Industry standards conformance</div>
+  <p style="margin-bottom:18px;">Where RDK-B functionality overlaps an established global standard, the
+    implementation conforms to that standard's normative requirements rather than
+    introducing a proprietary deviation.</p>
+
+  <table class="def-table">
+    <thead><tr><th>Standard / body</th><th>Applies to</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">BBF TR-069 (CWMP)</td><td>ACS Server, TR-069 adapter</td><td>Legacy remote management protocol</td></tr>
+      <tr><td class="mono">BBF TR-369 (USP)</td><td>USP Controller, TR-369 adapter</td><td>Transport-agnostic: WebSocket / MQTT / STOMP / CoAP</td></tr>
+      <tr><td class="mono">BBF TR-181 Device:2</td><td>All TR-181-backed parameters (WebPA, TR-069, USP, OneWiFi)</td><td>Single underlying data model across northbound protocols &amp; components</td></tr>
+      <tr><td class="mono">OpenAPI 3.x</td><td>Any REST API surface</td><td>Required for documenting REST interfaces</td></tr>
+      <tr><td class="mono">IEEE 802.11ax / 802.11be</td><td>OneWifi, rdk-wifi-hal, vendor Wi-Fi HAL</td><td>Wi-Fi 6/6E/7 PHY-MAC conformance</td></tr>
+      <tr><td class="mono">Wi-Fi Alliance EasyMesh R6</td><td>EasyMesh controller / agent interface</td><td>Multi-AP interoperability certification</td></tr>
+      <tr><td class="mono">Wi-Fi Alliance WPA3 / WPS</td><td>WPS box, Wi-Fi security stack</td><td></td></tr>
+      <tr><td class="mono">IEEE 802.1Q</td><td>RDKVlanBridgingManager, VLAN utils, VLAN HAL</td><td>VLAN tagging for ISP/service separation</td></tr>
+      <tr><td class="mono">IEEE 802.3</td><td>Ethernet switch HAL</td><td>Base Ethernet conformance</td></tr>
+      <tr><td class="mono">Bluetooth SIG Core Spec</td><td>Bluetoothctl, Bluetooth HCI</td><td></td></tr>
+      <tr><td class="mono">Thread Group / CSA Matter / CSA Zigbee</td><td>BartonCore (Thread, Matter, Zigbee bridge)</td><td>IoT — orchestrated via BartonCore</td></tr>
+      <tr><td class="mono">IEEE 802.15.4</td><td>BartonCore underlying radio layer</td><td>Thread / Zigbee</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="https://cpokuru.github.io/CoreRDK-Broadband-Docs-Staging/">Components — profiles<span>Required / optional components per device profile</span></a>
+      <a href="https://cpokuru.github.io/CoreRDK-Broadband-Docs-Staging/full-list.html">Components — full workbook<span>Interactive component list, all profiles</span></a>
+      <a href="https://wiki.rdkcentral.com/spaces/RDK/pages/498925914/RDK9+Core+RDK+Broadband+Specification+Approved+by+TAB">RDK9 Core RDK Broadband Spec<span>TAB-approved specification (wiki)</span></a>
+      <a href="https://github.com/rdkcentral">rdkcentral on GitHub<span>Component source repositories</span></a>
+    </div>
+    <div class="footer-meta">
+      RDK-B_CoreRDK_Spec_MVP(InternalReference)_v1.0 · RDKM · © 2026 RDK Central. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
